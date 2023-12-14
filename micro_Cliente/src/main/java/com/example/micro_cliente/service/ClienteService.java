@@ -12,6 +12,7 @@ import java.util.List;
 public interface ClienteService {
     TipoDocumentoEntity createTipoDocumento(TipoDocumento tipoDocumento);
     List<TipoDocumentoEntity> getAllTipoDocumento();
+    TipoDocumentoEntity deleteTipoDocumento(Long id);
     ClienteEntity createCliente(Cliente cliente);
     List<ClienteEntity> getAllClientes();
     ClienteEntity getClienteByNroDoc(Long nroDoc);

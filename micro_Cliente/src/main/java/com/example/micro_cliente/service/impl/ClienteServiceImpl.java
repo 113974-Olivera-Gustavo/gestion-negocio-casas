@@ -51,6 +51,17 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
+    public TipoDocumentoEntity deleteTipoDocumento(Long id) {
+        Optional<TipoDocumentoEntity> existeTipoDocumento = tipoDocumentoRepository.findAll().stream()
+                .filter(tipoDocumentoEntity -> tipoDocumentoEntity.getId().equals(id)).findFirst();
+        if(!existeTipoDocumento.isPresent()){
+            throw new NullPointerException("No existe un tipo de documento con ese id");
+        }
+        tipoDocumentoRepository.deleteById(id);
+        return existeTipoDocumento.get();
+    }
+
+    @Override
     public ClienteEntity createCliente(Cliente cliente) {
         if(cliente == null){
             throw new NullPointerException("Cliente no puede ser nulo");

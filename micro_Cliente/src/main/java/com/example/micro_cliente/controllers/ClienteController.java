@@ -33,6 +33,12 @@ public class ClienteController {
         TipoDocumentoEntity createdTipoDocumento = clienteService.createTipoDocumento(tipoDocumento);
         return ResponseEntity.ok(createdTipoDocumento);
     }
+    @DeleteMapping("/deleteTipoDocumento/{id}")
+    public ResponseEntity<TipoDocumentoEntity> deleteTipoDocumento(@PathVariable Long id){
+        TipoDocumentoEntity deletedTipoDocumento = clienteService.deleteTipoDocumento(id);
+        return ResponseEntity.ok(deletedTipoDocumento);
+    }
+
     @PostMapping("/postCliente")
     public ResponseEntity<ClienteEntity> postCliente(@RequestBody Cliente cliente){
         if(cliente == null){
