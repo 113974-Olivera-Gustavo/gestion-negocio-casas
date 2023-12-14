@@ -1,5 +1,9 @@
 package com.example.micro_cliente.service.impl;
 
+import com.example.micro_cliente.client.FidelizacionClient;
+import com.example.micro_cliente.dto.catalogo.FacturacionRequest;
+import com.example.micro_cliente.dto.catalogo.FacturacionSolicitud;
+import com.example.micro_cliente.dto.catalogo.ProductoRequest;
 import com.example.micro_cliente.entities.ClienteEntity;
 import com.example.micro_cliente.entities.TipoDocumentoEntity;
 import com.example.micro_cliente.models.Cliente;
@@ -14,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class ClienteServiceImpl implements ClienteService {
@@ -24,12 +29,14 @@ public class ClienteServiceImpl implements ClienteService {
     private final ClienteRepository clienteRepository;
     private final TipoDocumentoRepository tipoDocumentoRepository;
     private final ModelMapper modelMapper;
+    private final FidelizacionClient fidelizacionClient;
 
     @Autowired
-    public ClienteServiceImpl(ClienteRepository clienteRepository, TipoDocumentoRepository tipoDocumentoRepository, ModelMapper modelMapper) {
+    public ClienteServiceImpl(ClienteRepository clienteRepository, TipoDocumentoRepository tipoDocumentoRepository, ModelMapper modelMapper, FidelizacionClient fidelizacionClient) {
         this.clienteRepository = clienteRepository;
         this.tipoDocumentoRepository = tipoDocumentoRepository;
         this.modelMapper = modelMapper;
+        this.fidelizacionClient = fidelizacionClient;
     }
 
 
@@ -105,8 +112,52 @@ public class ClienteServiceImpl implements ClienteService {
         return existeNroDoc.get();
     }
 
+    //Fidelizacion
+
+
+    @Override
+    public List<ProductoRequest> getAllProductosOfertaActiva() {
+        try {
+            if(fidelizacionClient == null){
+                throw new NullPointerException("No se pudo conectar con el servicio de fidelizacion");
+            }
+            List<ProductoRequest> productos = fidelizacionClient.getAllProductos();
+            return productos.stream()
+                    .filter(this::tieneOfertasActivas)
+                    .collect(Collectors.toList());
+        }catch (RuntimeException e){
+            throw new RuntimeException("No se pudo encontrar ofertas activas"+ e.getMessage());
+        }
+    }
+
+    @Override
+    public Cliente setearPuntos(FacturacionRequest facturacionRequest) {
+        Long nroDocAPI = facturacionRequest.getNroDoc();
+
+       List<FacturacionSolicitud> facturacionSolicitud = fidelizacionClient.getAllFacturacion();
+
+       Optional<FacturacionSolicitud> facturacionOptional = facturacionSolicitud.stream()
+               .filter(facturacion -> facturacion.getNroDoc().equals(nroDocAPI)).findFirst();
+
+        if (facturacionOptional.isPresent()) {
+
+            FacturacionSolicitud facturacion = facturacionOptional.get();
+            Optional <ClienteEntity> clienteOptional = clienteRepository.findByNroDoc(nroDocAPI);
+
+            if(clienteOptional.isPresent()){
+                ClienteEntity cliente = clienteOptional.get();
+                //Metodo setear puntos...seguir con el seteo de puntos, resta de puntos.
+            }
+        }
+    }
+
+
+    //Metodos auxiliares
+
     private boolean validarEmail(String email) {
         return EMAIL_PATTERN.matcher(email).matches();
     }
-
+    private Boolean tieneOfertasActivas(ProductoRequest productoRequest){
+        return productoRequest.getOfertas().stream().anyMatch(oferta -> oferta.getActivo());
+    }
 }

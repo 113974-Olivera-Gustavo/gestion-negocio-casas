@@ -1,5 +1,7 @@
 package com.example.micro_cliente.service;
 
+import com.example.micro_cliente.dto.catalogo.FacturacionRequest;
+import com.example.micro_cliente.dto.catalogo.ProductoRequest;
 import com.example.micro_cliente.entities.ClienteEntity;
 import com.example.micro_cliente.entities.TipoDocumentoEntity;
 import com.example.micro_cliente.models.Cliente;
@@ -16,4 +18,8 @@ public interface ClienteService {
     ClienteEntity createCliente(Cliente cliente);
     List<ClienteEntity> getAllClientes();
     ClienteEntity getClienteByNroDoc(Long nroDoc);
+    //Fidelizacion
+    List<ProductoRequest> getAllProductosOfertaActiva();
+    Cliente setearPuntos(FacturacionRequest facturacionRequest);
+
 }
