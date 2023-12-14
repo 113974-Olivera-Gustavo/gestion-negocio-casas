@@ -1,13 +1,10 @@
 package com.example.micro_cliente.controllers;
 
+import com.example.micro_cliente.entities.ClienteEntity;
 import com.example.micro_cliente.entities.TipoDocumentoEntity;
 import com.example.micro_cliente.models.Cliente;
 import com.example.micro_cliente.models.TipoDocumento;
 import com.example.micro_cliente.service.ClienteService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,5 +32,23 @@ public class ClienteController {
         }
         TipoDocumentoEntity createdTipoDocumento = clienteService.createTipoDocumento(tipoDocumento);
         return ResponseEntity.ok(createdTipoDocumento);
+    }
+    @PostMapping("/postCliente")
+    public ResponseEntity<ClienteEntity> postCliente(@RequestBody Cliente cliente){
+        if(cliente == null){
+            return ResponseEntity.badRequest().body(null);
+        }
+        ClienteEntity createdCliente = clienteService.createCliente(cliente);
+        return ResponseEntity.ok(createdCliente);
+    }
+    @GetMapping("/getAllClientes")
+    public ResponseEntity<List<ClienteEntity>> getAllClientes() {
+        List<ClienteEntity> clientes = clienteService.getAllClientes();
+        return ResponseEntity.ok(clientes);
+    }
+    @GetMapping("/getClienteByNroDoc/{nroDoc}")
+    public ResponseEntity<ClienteEntity> getClienteByNroDoc(@PathVariable Long nroDoc) {
+        ClienteEntity cliente = clienteService.getClienteByNroDoc(nroDoc);
+        return ResponseEntity.ok(cliente);
     }
 }
