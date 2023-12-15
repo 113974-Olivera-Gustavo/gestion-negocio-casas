@@ -1,5 +1,6 @@
 package com.example.micro_cliente.service;
 
+import com.example.micro_cliente.dto.catalogo.CompraRequest;
 import com.example.micro_cliente.dto.catalogo.FacturacionRequest;
 import com.example.micro_cliente.dto.catalogo.ProductoRequest;
 import com.example.micro_cliente.entities.ClienteEntity;
@@ -21,5 +22,6 @@ public interface ClienteService {
     //Fidelizacion
     List<ProductoRequest> getAllProductosOfertaActiva();
     Cliente setearPuntos(FacturacionRequest facturacionRequest);
+    void procesarCompra(CompraRequest compra);
 
 }

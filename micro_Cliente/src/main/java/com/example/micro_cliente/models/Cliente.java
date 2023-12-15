@@ -16,5 +16,5 @@ public class Cliente {
     private String domicilio;
     private String telefono;
     private String email;
-    private Long puntosBeneficio;
+    private Double puntosBeneficio;
 }

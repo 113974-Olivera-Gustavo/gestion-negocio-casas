@@ -35,5 +35,5 @@ public class ClienteEntity {
     @Column
     @Min(0)
     @Max(5000)
-    private Long puntosBeneficio;
+    private Double puntosBeneficio;
 }

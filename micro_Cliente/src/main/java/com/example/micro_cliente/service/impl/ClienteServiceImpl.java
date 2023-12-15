@@ -1,9 +1,7 @@
 package com.example.micro_cliente.service.impl;
 
 import com.example.micro_cliente.client.FidelizacionClient;
-import com.example.micro_cliente.dto.catalogo.FacturacionRequest;
-import com.example.micro_cliente.dto.catalogo.FacturacionSolicitud;
-import com.example.micro_cliente.dto.catalogo.ProductoRequest;
+import com.example.micro_cliente.dto.catalogo.*;
 import com.example.micro_cliente.entities.ClienteEntity;
 import com.example.micro_cliente.entities.TipoDocumentoEntity;
 import com.example.micro_cliente.models.Cliente;
@@ -15,6 +13,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -146,14 +146,71 @@ public class ClienteServiceImpl implements ClienteService {
 
             if(clienteOptional.isPresent()){
                 ClienteEntity cliente = clienteOptional.get();
-                //Metodo setear puntos...seguir con el seteo de puntos, resta de puntos.
+                if(cliente.getNroDoc().equals(nroDocAPI)){
+                    // Obtenemos el monto total facturado por el cliente desde la API
+                    BigDecimal totalAmountBilledAPI = facturacion.getTotalAmountBilled();
+                    Double puntosAdicionales = totalAmountBilledAPI.divide(new BigDecimal("5000"), RoundingMode.FLOOR).doubleValue()*10;
+                    // Sumamos los nuevos puntos a los puntos existentes
+                    Double nuevosPuntos = cliente.getPuntosBeneficio() + puntosAdicionales;
+
+                    // Actualizamos los puntos del cliente en la entidad y guardamos en la base de datos
+                    cliente.setPuntosBeneficio(nuevosPuntos);
+                    clienteRepository.save(cliente);
+
+                    return modelMapper.map(cliente, Cliente.class);
+                }
+                else {
+                    throw new RuntimeException("El DNI ingresado no coincide con el DNI del cliente.");
+                }
+            } else {
+                throw new RuntimeException("El DNI ingresado no coincide con el DNI del cliente.");
             }
+        } else {
+            throw new RuntimeException("DNI no encontrado en la API externa.");
+
         }
     }
 
+    @Override
+    public void procesarCompra(CompraRequest compra) {
+        List<ProductoRequest> productosEnOferta =getAllProductosOfertaActiva();
+        for(ProductosCanjeados productosCanjeados : compra.getProductosCanjeados()){
+            String codigoProducto = productosCanjeados.getCodigo();
+            int cantidadComprada = productosCanjeados.getCantidad();
 
+            //Encontrar codigo en la oferta
+            Optional<ProductoRequest> productoOptional =productosEnOferta.stream()
+                    .filter(producto -> producto.getCodigo().equals(codigoProducto))
+                    .findFirst();
+            if(productoOptional.isPresent()){
+                Double puntosPorProducto = productoOptional.get().getOfertas().get(0).getPuntos();
+                Double puntosTotales = puntosPorProducto * cantidadComprada;
+
+                restarPuntosAlCliente(compra.getNroDoc(), puntosTotales);
+            }
+            else{
+                throw new RuntimeException("Producto no encontrado en la oferta: "+codigoProducto);
+            }
+        }
+    }
     //Metodos auxiliares
+    public void restarPuntosAlCliente(Long nroDoc, Double puntosTotales) {
+        Optional<ClienteEntity> cliente = clienteRepository.findByNroDoc(nroDoc);
+        if(cliente.isPresent()){
+            if(cliente.get().getPuntosBeneficio() < puntosTotales){
+                throw new RuntimeException("El cliente no tiene suficientes puntos para realizar la compra");
+            }
+            ClienteEntity clienteEntity = cliente.get();
+            Double puntosActuales = clienteEntity.getPuntosBeneficio();
+            Double nuevosPuntos = Math.max(0, puntosActuales - puntosTotales);
 
+            clienteEntity.setPuntosBeneficio(nuevosPuntos);
+            clienteRepository.save(clienteEntity);
+        }
+        else {
+            throw new RuntimeException("No se encontro un cliente con el numero de documento: " + nroDoc);
+        }
+    }
     private boolean validarEmail(String email) {
         return EMAIL_PATTERN.matcher(email).matches();
     }
